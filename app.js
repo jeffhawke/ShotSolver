@@ -9,6 +9,38 @@ const FIELD_SIZE = 7;
 
 var iternum = 0;
 
+//typeof someVar === 'undefined'
+
+class ball {
+  constructor(pos_x, pos_y) {
+    this.pos_x = pos_x;
+    this.pos_y = pos_y;
+  }
+  equals (b) {
+    if( b.prototype === this.prototype && b.pos_x==this.pos_x && b.pos_y == this.pos_y ) {
+      return true;
+    }
+    return false;
+  }
+}
+
+class field {
+  constructor(size) {
+    this.size = size;
+    this.balls = [];
+  }
+  addBall(pos_x, pos_y) {
+    b = new ball(pos_x, pos_y);
+    if(! this.ballExists(b))  
+      ball.push(b);
+  }
+  ballExists(ball) {
+    return (balls.findIndex( ball.equals ) >= 0);
+  }
+}
+
+
+
 // array of triples : [ ball positions, legal moves, moves executed ]
 var solveQueue = [];
 
