@@ -1,6 +1,3 @@
-
-
-
 var express = require('express');
 
 var app = express();
@@ -8,138 +5,6 @@ var app = express();
 const FIELD_SIZE = 7;
 
 var iternum = 0;
-
-//typeof someVar === 'undefined'
-
-class ball {
-  constructor(pos_x, pos_y) {
-    this.pos_x = pos_x;
-    this.pos_y = pos_y;
-  }
-  equals (b) {
-    if( b.prototype === this.prototype && b.pos_x==this.pos_x && b.pos_y == this.pos_y ) {
-      return true;
-    }
-    return false;
-  }
-  moveUp() {
-    this.pos_y--;
-    return this.pos_y;
-  }
-  moveDown() {
-    this.pos_y++;
-    return this.pos_y;
-  }
-  moveLeft() {
-    this.pos_x--;
-    return this.pos_x;
-  }
-  moveRight() {
-    this.pos_x++;
-    return this.pos_x;
-  }
-}
-
-class field {
-  constructor(size) {
-    this.size = size;
-    this.balls = [];
-  }
-  addBall(pos_x, pos_y) {
-    b = new ball(pos_x, pos_y);
-    if(! this.ballExists(b))  
-      ball.push(b);
-  }
-  ballExists(ball) {
-    return (balls.findIndex( ball.equals ) >= 0);
-  }
-
-  moveAlongUp(b) {
-    var bb = new ball(b.pos_x,b.pos_y);
-    var ret = { found: false, pos_y: -1 };
-    //'u'
-    pos_x = b[0];
-    pos_y = b[1] - 1;
-    if(pos_y > 0 && ! this.ballExists(new b(pos_x, pos_y)) ) { //first step must be free and away from borders
-      do {
-        pos_y--;
-        if(pos_y >= 0 && this.ballExists(new b(pos_x, pos_y)) ) {
-          ret.found = true;
-          ret.pos_y = pos_y;
-          break;
-        }
-      } while (pos_y >= 0);
-    }
-    return ret;
-  }
-  
-  moveAlongDown(ball) {
-    var pos_x, pos_y;
-    var ret = { found: false, pos_y: FIELD_SIZE };
-    //'d'
-    pos_x = ball[0];
-    pos_y = ball[1] + 1;
-    if(pos_y < FIELD_SIZE - 1 && !checkBallinField([pos_x, pos_y], field)) { //first step must be free and away from borders
-      do {
-        pos_y++;
-        if(pos_y < FIELD_SIZE && checkBallinField([pos_x, pos_y], field)) {
-          ret.found = true;
-          ret.pos_y = pos_y;
-          break;
-        }
-      } while (pos_y < FIELD_SIZE);
-    }
-    return ret;
-  }
-  
-  moveAlongLeft(ball) {
-    var pos_x, pos_y;
-    var ret = { found: false, pos_x: -1 };
-  
-    //'l'
-    pos_x = ball[0] - 1;
-    pos_y = ball[1];
-    if(pos_x > 0 && !checkBallinField([pos_x, pos_y], field)) { //first step must be free and away from borders
-      do {
-        pos_x--;
-        if(pos_x >= 0 && checkBallinField([pos_x, pos_y], field)) {
-          ret.found = true;
-          ret.pos_x = pos_x;
-          break;
-        }
-      } while (pos_x >= 0);
-    }
-    
-    return ret;
-  }
-  
-  moveAlongRight(ball) {
-    var pos_x, pos_y;
-    var ret = { found: false, pos_x: FIELD_SIZE };
-  
-    //'r'
-    pos_x = ball[0] + 1;
-    pos_y = ball[1];
-    if(pos_x < FIELD_SIZE - 1 && !checkBallinField([pos_x, pos_y], field)) { //first step must be free and away from borders
-      do {
-        pos_x++;
-        if(pos_x < FIELD_SIZE && checkBallinField([pos_x, pos_y], field)) {
-          ret.found = true;
-          ret.pos_x = pos_x;
-          break;
-        }
-      } while (pos_x < FIELD_SIZE);
-    }
-  
-    return ret;
-  }
-     
-
-
-
-
-}
-
 
 
 // array of triples : [ ball positions, legal moves, moves executed ]
@@ -221,24 +86,69 @@ function doSolveStep(triple) {
 
 }
 
-function executeMove(balls, move) {
-  var ball = move[0];
+function isBallPositionLegal(ball) {
+  return ball[0]>=0 && ball[0]<FIELD_SIZE && ball[1]>=0 && ball[1]<FIELD_SIZE
+}
 
-  var found = balls.findIndex(function(b) {
+function getBallIndexInField(ball, field) {
+  return field.findIndex(function(b) {
     return b[0] == ball[0] && b[1] == ball[1];
   });
+}
+
+function checkBallinField(ball,field) {
+  return ( getBallIndexInField(ball,field) >= 0);
+}
+
+
+function executeMove(field, move) {
+  var ball = move[0];
+
+  var found = getBallIndexInField(ball, field);
+  //field.findIndex(function(b) {
+  //  return b[0] == ball[0] && b[1] == ball[1];
+  //});
   
   if (found >= 0) {
-    var ob = balls.splice(found, 0);
-    var nb = updatePos(ob, move[1]);
-    //the move should be legal and thus the resulting ball should be inside the field
-    //still, better to trust but verify
-    if( nb[0]>=0 && nb[0]<FIELD_SIZE && nb[1]>=0 && nb[1]<FIELD_SIZE)
-      balls.push(nb);
-    else
-      balls.push(ob);
+    var ob = field.splice(found, 1);
+    var b = ob[0];
+    //var nb = updatePos(ob, move[1]);
+
+    var ret;
+    switch(move[1]) {
+      case 'u':
+        do {
+          ret = moveAlongUp(b,field);
+          if(ret.found && ret.pos_y >= 0) {
+            
+            found = getBallIndexInField(b, field);
+
+            b.pos_y = ret.pos_y - 1;
+            field.push(b);
+            
+            ob = field.splice(found, 1)
+            b = ob[0];
+          }
+        } while(!ret.found);
+        break;
+      case 'd':
+        
+      case 'l':
+        
+      case 'r':
+        
+      default:
+        
+    }
+
+
+
+
+
+
+
   }
-  return balls;
+  return field;
 }
 
 function updatePos(ball, direction) {
@@ -256,83 +166,13 @@ function updatePos(ball, direction) {
   }
 }
 
-/*
-function findUnobstructedMoves(balls) {
-  var legalMoves = [];
-
-  balls.forEach(function (ball, i) {
-    //console.log(ball);
-
-    var foundUp = balls.findIndex(function(b) {
-      return b[0] == ball[0] && b[1] == ball[1] - 1;
-    });
-    var foundDown = balls.findIndex(function(b) {
-      return b[0] == ball[0] && b[1] == ball[1] + 1;
-    });
-    var foundLeft = balls.findIndex(function(b) {
-      return b[0] == ball[0] - 1 && b[1] == ball[1];
-    });
-    var foundRight = balls.findIndex(function(b) {
-      return b[0] == ball[0] + 1 && b[1] == ball[1];
-    });
-
-    //console.log(foundUp + "," + foundDown + "," + foundLeft + "," + foundRight);
-
-    if(foundUp == -1 && ball[1] > 0) {
-      legalMoves.push([Array.from(ball), 'u']);
-    }
-    if(foundDown == -1 && ball[1] < FIELD_SIZE-1) {
-      legalMoves.push([Array.from(ball), 'd']);
-    }
-    if(foundLeft == -1 && ball[0] > 0) {
-      legalMoves.push([Array.from(ball), 'l']);
-    }
-    if(foundRight == -1 && ball[0] < FIELD_SIZE-1) {
-      legalMoves.push([Array.from(ball), 'r']);
-    }
-
-
-  })
-
-  return legalMoves;
-
-}
-*/
 
 function findAllLegalMoves(balls) {
   var legalMoves = [];
 
   balls.forEach(function (ball, i) {
     //console.log(ball);
-    /*
-    var foundUp = balls.findIndex(function(b) {
-      return b[0] == ball[0] && b[1] == ball[1] - 1;
-    });
-    var foundDown = balls.findIndex(function(b) {
-      return b[0] == ball[0] && b[1] == ball[1] + 1;
-    });
-    var foundLeft = balls.findIndex(function(b) {
-      return b[0] == ball[0] - 1 && b[1] == ball[1];
-    });
-    var foundRight = balls.findIndex(function(b) {
-      return b[0] == ball[0] + 1 && b[1] == ball[1];
-    });
 
-    //console.log(foundUp + "," + foundDown + "," + foundLeft + "," + foundRight);
-
-    if(foundUp == -1 && ball[1] > 0) {
-      legalMoves.push([Array.from(ball), 'u']);
-    }
-    if(foundDown == -1 && ball[1] < FIELD_SIZE-1) {
-      legalMoves.push([Array.from(ball), 'd']);
-    }
-    if(foundLeft == -1 && ball[0] > 0) {
-      legalMoves.push([Array.from(ball), 'l']);
-    }
-    if(foundRight == -1 && ball[0] < FIELD_SIZE-1) {
-      legalMoves.push([Array.from(ball), 'r']);
-    }
-    */
     var newmoves = findLegalMoves(ball, balls);
     legalMoves = legalMoves.concat(newmoves);
 
@@ -342,11 +182,6 @@ function findAllLegalMoves(balls) {
 
 }
 
-function checkBallinField(ball,field) {
-  return (field.findIndex(function(b) {
-    return b[0] == ball[0] && b[1] == ball[1];
-  }) >= 0);
-}
 
 function moveAlongUp(ball, field) {
   var pos_x, pos_y;
