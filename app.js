@@ -27,8 +27,8 @@ function solve(elements) {
     var legalMoves = findAllLegalMoves(startingBalls);
     
     console.log(legalMoves);
-/*
-    solveQueue.push( [ startingBalls, legalMoves, [] ] )
+
+    solveQueue.push( [ copyField(startingBalls), copyMoves(legalMoves), [] ] )
 
     while(solveQueue.length > 0) {
       var triple = solveQueue.pop();
@@ -39,7 +39,7 @@ function solve(elements) {
 
     console.log(solutions);
     console.log("Done");
-*/
+
 
 /*
     var test = copyMoves(legalMoves);
@@ -56,8 +56,13 @@ function solve(elements) {
   }
 }
 
+
+function copyField(f) {
+  return Array.from(f);
+}
+
 function copyMove(m) {
-  return [Array.from(m[0]), m[1]];
+  return [copyField(m[0]), m[1]];
 }
 
 function copyMoves(moves) {
@@ -77,8 +82,11 @@ function doSolveStep(triple) {
   // - update the doneMoves and push into the stack
   else {
     triple[1].forEach(function (move) {
-      var balls = executeMove(triple[0], move);
-      solveQueue.push([ balls, findAllLegalMoves(balls), copyMoves(triple[2]).push(copyMove(move))]); 
+      var newField = executeMove(copyField(triple[0]), move);
+      var newLegalMoves = findAllLegalMoves(newField);
+      var newSolutionSteps = copyMoves(triple[2]);
+      newSolutionSteps.push(copyMove(move));
+      solveQueue.push([ newField, newLegalMoves, newSolutionSteps ]); 
     })
 
     return false;
@@ -114,29 +122,40 @@ function executeMove(field, move) {
     var b = ob[0];
     //var nb = updatePos(ob, move[1]);
 
-    var ret;
+    var ret, nextBallIndex;
     switch(move[1]) {
       case 'u':
         do {
           ret = moveAlongUp(b,field);
           if(ret.found && ret.pos_y >= 0) {
-            
-            found = getBallIndexInField(b, field);
 
-            b.pos_y = ret.pos_y - 1;
+            b[1] = ret.pos_y + 1;
             field.push(b);
             
-            ob = field.splice(found, 1)
+            nextBallIndex = getBallIndexInField(ret.ball, field);
+            ob = field.splice(nextBallIndex, 1)
             b = ob[0];
           }
-        } while(!ret.found);
+        } while(ret.found);
         break;
       case 'd':
-        
+        do {
+          ret = moveAlongDown(b,field);
+          if(ret.found && ret.pos_y < FIELD_SIZE) {
+
+            b[1] = ret.pos_y - 1;
+            field.push(b);
+            
+            nextBallIndex = getBallIndexInField(ret.ball, field);
+            ob = field.splice(nextBallIndex, 1)
+            b = ob[0];
+          }
+        } while(ret.found);
+        break;
       case 'l':
-        
+        break;
       case 'r':
-        
+        break;
       default:
         
     }
@@ -185,7 +204,7 @@ function findAllLegalMoves(balls) {
 
 function moveAlongUp(ball, field) {
   var pos_x, pos_y;
-  var ret = { found: false, pos_y: -1 };
+  var ret = { found: false, pos_y: -1 , ball: null};
   //'u'
   pos_x = ball[0];
   pos_y = ball[1] - 1;
@@ -195,6 +214,7 @@ function moveAlongUp(ball, field) {
       if(pos_y >= 0 && checkBallinField([pos_x, pos_y], field)) {
         ret.found = true;
         ret.pos_y = pos_y;
+        ret.ball = [pos_x, pos_y];
         break;
       }
     } while (pos_y >= 0);
@@ -204,7 +224,7 @@ function moveAlongUp(ball, field) {
 
 function moveAlongDown(ball, field) {
   var pos_x, pos_y;
-  var ret = { found: false, pos_y: FIELD_SIZE };
+  var ret = { found: false, pos_y: FIELD_SIZE, ball: null };
   //'d'
   pos_x = ball[0];
   pos_y = ball[1] + 1;
@@ -214,6 +234,7 @@ function moveAlongDown(ball, field) {
       if(pos_y < FIELD_SIZE && checkBallinField([pos_x, pos_y], field)) {
         ret.found = true;
         ret.pos_y = pos_y;
+        ret.ball = [pos_x, pos_y];
         break;
       }
     } while (pos_y < FIELD_SIZE);
@@ -223,7 +244,7 @@ function moveAlongDown(ball, field) {
 
 function moveAlongLeft(ball, field) {
   var pos_x, pos_y;
-  var ret = { found: false, pos_x: -1 };
+  var ret = { found: false, pos_x: -1 , ball: null};
 
   //'l'
   pos_x = ball[0] - 1;
@@ -234,6 +255,7 @@ function moveAlongLeft(ball, field) {
       if(pos_x >= 0 && checkBallinField([pos_x, pos_y], field)) {
         ret.found = true;
         ret.pos_x = pos_x;
+        ret.ball = [pos_x, pos_y];
         break;
       }
     } while (pos_x >= 0);
@@ -244,7 +266,7 @@ function moveAlongLeft(ball, field) {
 
 function moveAlongRight(ball, field) {
   var pos_x, pos_y;
-  var ret = { found: false, pos_x: FIELD_SIZE };
+  var ret = { found: false, pos_x: FIELD_SIZE , ball: null};
 
   //'r'
   pos_x = ball[0] + 1;
@@ -255,6 +277,7 @@ function moveAlongRight(ball, field) {
       if(pos_x < FIELD_SIZE && checkBallinField([pos_x, pos_y], field)) {
         ret.found = true;
         ret.pos_x = pos_x;
+        ret.ball = [pos_x, pos_y];
         break;
       }
     } while (pos_x < FIELD_SIZE);
