@@ -4,7 +4,7 @@ var app = express();
 
 const FIELD_SIZE = 7;
 
-var MYPORT = (typeof process.env.JSPORT === "undefined") ? 3000 : process.env.JSPORT;
+const JSPORT = (typeof process.env.JSPORT === "undefined") ? 3000 : process.env.JSPORT;
 
 
 // array of triples : [ ball positions, legal moves, moves executed ]
