@@ -12,51 +12,42 @@ var solveQueue = [];
 
 var solutions = [];
 
+function readStartingBall(elements) {
+  var startingBalls = [];
+  var re1 = /\((\d+) (\d+)\)/g;
+  var resRE;
+  while((resRE = re1.exec(elements)) !== null) {
+    var v1 = parseInt(resRE[1]);
+    var v2 = parseInt(resRE[2]);
+    startingBalls.push([v1,v2]);
+  }
+
+  return startingBalls;
+}
+
+
 function solve(elements) {
   solveQueue = [];
   solutions = [];
 
-  if(elements != "()") {
-    var strvalues = elements.toString().slice(1, -1).split(" ");
-    var i = 0;
-    var startingBalls = [];
-    while (i < strvalues.length) {
-      v1 = parseInt(strvalues[i++]);
-      v2 = parseInt(strvalues[i++]);
-      startingBalls.push([v1,v2]);
-    } 
-    prettyPrintField(startingBalls);
+  var startingBalls = readStartingBall(elements);
 
-    var legalMoves = findAllLegalMoves(startingBalls);
-    
-    prettyPrintLegalMoves(legalMoves);
+  prettyPrintField(startingBalls);
 
-    solveQueue.push( [ copyField(startingBalls), copyMoves(legalMoves), [] ] )
+  var legalMoves = findAllLegalMoves(startingBalls);
+  
+  prettyPrintLegalMoves(legalMoves);
 
-    while(solveQueue.length > 0) {
-      var triple = solveQueue.pop();
-      if( doSolveStep(triple) ) {
-        solutions.push(triple[2]);
-      }
+  solveQueue.push( [ copyField(startingBalls), copyMoves(legalMoves), [] ] )
+
+  while(solveQueue.length > 0) {
+    var triple = solveQueue.pop();
+    if( doSolveStep(triple) ) {
+      solutions.push(triple[2]);
     }
-
-    prettyPrintSolutions(solutions);
-    //console.log("Done");
-
-
-/*
-    var test = copyMoves(legalMoves);
-    console.log(test);
-
-    legalMoves[1][1] = "gggg";
-    legalMoves[1][0][0] = 7;
-
-    console.log(startingBalls);
-    console.log(legalMoves);
-    console.log(test);
-*/
-
   }
+
+  prettyPrintSolutions(solutions);
 }
 
 function prettyPrintField(f) {
@@ -339,6 +330,11 @@ function findLegalMoves(ball, field) {
 
 
 function resp(req) {
+  
+  console.log(req.query);
+
+  console.log(req.query.elements);
+
   solve(req.query.elements);
 
   return JSON.stringify(solutions);
