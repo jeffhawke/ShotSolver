@@ -4,8 +4,6 @@ var app = express();
 
 const FIELD_SIZE = 7;
 
-var iternum = 0;
-
 
 // array of triples : [ ball positions, legal moves, moves executed ]
 var solveQueue = [];
@@ -154,16 +152,11 @@ function checkBallinField(ball,field) {
 
 function executeMove(field, move) {
   var ball = move[0];
-
   var found = getBallIndexInField(ball, field);
-  //field.findIndex(function(b) {
-  //  return b[0] == ball[0] && b[1] == ball[1];
-  //});
-  
-  if (found >= 0) {
+
+  if (found >= 0) { //sanity check
     var ob = field.splice(found, 1);
     var b = ob[0];
-    //var nb = updatePos(ob, move[1]);
 
     var ret, nextBallIndex;
     switch(move[1]) {
@@ -229,37 +222,6 @@ function executeMove(field, move) {
 
   }
   return field;
-}
-
-function updatePos(ball, direction) {
-  switch(direction) {
-    case 'u':
-      return [ball[0], ball[1]-1];
-    case 'd':
-      return [ball[0], ball[1]+1];
-    case 'l':
-      return [ball[0]-1, ball[1]];
-    case 'r':
-    return [ball[0]+1, ball[1]];
-    default:
-      return ball;
-  }
-}
-
-
-function findAllLegalMoves(balls) {
-  var legalMoves = [];
-
-  balls.forEach(function (ball, i) {
-    //console.log(ball);
-
-    var newmoves = findLegalMoves(ball, balls);
-    legalMoves = legalMoves.concat(newmoves);
-
-  })
-
-  return legalMoves;
-
 }
 
 
@@ -335,114 +297,40 @@ function findNextBallRight(ball, field) {
   return ret;
 }
 
-function moveAlongUp(ball, field) {
-  var pos_x, pos_y;
-  var ret = { found: false, pos_y: -1 , ball: null};
-  //'u'
-  pos_x = ball[0];
-  pos_y = ball[1] - 1;
-  if(pos_y > 0 && !checkBallinField([pos_x, pos_y], field)) { //first step must be free and away from borders
-    do {
-      pos_y--;
-      if(pos_y >= 0 && checkBallinField([pos_x, pos_y], field)) {
-        ret.found = true;
-        ret.pos_y = pos_y;
-        ret.ball = [pos_x, pos_y];
-        break;
-      }
-    } while (pos_y >= 0);
-  }
-  return ret;
+function findAllLegalMoves(field) {
+  var legalMoves = [];
+
+  field.forEach(function (b) {
+    var newmoves = findLegalMoves(b, field);
+    legalMoves = legalMoves.concat(newmoves);
+  })
+
+  return legalMoves;
 }
-
-function moveAlongDown(ball, field) {
-  var pos_x, pos_y;
-  var ret = { found: false, pos_y: FIELD_SIZE, ball: null };
-  //'d'
-  pos_x = ball[0];
-  pos_y = ball[1] + 1;
-  if(pos_y < FIELD_SIZE - 1 && !checkBallinField([pos_x, pos_y], field)) { //first step must be free and away from borders
-    do {
-      pos_y++;
-      if(pos_y < FIELD_SIZE && checkBallinField([pos_x, pos_y], field)) {
-        ret.found = true;
-        ret.pos_y = pos_y;
-        ret.ball = [pos_x, pos_y];
-        break;
-      }
-    } while (pos_y < FIELD_SIZE);
-  }
-  return ret;
-}
-
-function moveAlongLeft(ball, field) {
-  var pos_x, pos_y;
-  var ret = { found: false, pos_x: -1 , ball: null};
-
-  //'l'
-  pos_x = ball[0] - 1;
-  pos_y = ball[1];
-  if(pos_x > 0 && !checkBallinField([pos_x, pos_y], field)) { //first step must be free and away from borders
-    do {
-      pos_x--;
-      if(pos_x >= 0 && checkBallinField([pos_x, pos_y], field)) {
-        ret.found = true;
-        ret.pos_x = pos_x;
-        ret.ball = [pos_x, pos_y];
-        break;
-      }
-    } while (pos_x >= 0);
-  }
-  
-  return ret;
-}
-
-function moveAlongRight(ball, field) {
-  var pos_x, pos_y;
-  var ret = { found: false, pos_x: FIELD_SIZE , ball: null};
-
-  //'r'
-  pos_x = ball[0] + 1;
-  pos_y = ball[1];
-  if(pos_x < FIELD_SIZE - 1 && !checkBallinField([pos_x, pos_y], field)) { //first step must be free and away from borders
-    do {
-      pos_x++;
-      if(pos_x < FIELD_SIZE && checkBallinField([pos_x, pos_y], field)) {
-        ret.found = true;
-        ret.pos_x = pos_x;
-        ret.ball = [pos_x, pos_y];
-        break;
-      }
-    } while (pos_x < FIELD_SIZE);
-  }
-
-  return ret;
-}
-   
 
 function findLegalMoves(ball, field) {
   var legalMoves = [];
+  var ret;
 
-  var pos_x, pos_y;
-  
-  if ( moveAlongUp(ball, field).found ) {
-    legalMoves.push(copyMove([ball, 'u']));
+  ret = findNextBallUp(ball, field);
+  if ( ret.found && ret.pos_y < (ball[1] - 1) ) {
+    legalMoves.push([copyBall(ball), 'u']);
   }
   
-  if ( moveAlongDown(ball, field).found ) {
-    legalMoves.push(copyMove([ball, 'd']));
+  ret = findNextBallDown(ball, field);
+  if ( ret.found && ret.pos_y > (ball[1] + 1) ) {
+    legalMoves.push([copyBall(ball), 'd']);
   }
 
-  if ( moveAlongLeft(ball, field).found ) {
-    legalMoves.push(copyMove([ball, 'l']));
+  ret = findNextBallLeft(ball, field);
+  if ( ret.found && ret.pos_x < (ball[0] - 1) ) {
+    legalMoves.push([copyBall(ball), 'l']);
   }
 
-  if ( moveAlongRight(ball, field).found ) {
-    legalMoves.push(copyMove([ball, 'r']));
+  ret = findNextBallRight(ball, field);
+  if ( ret.found && ret.pos_x > (ball[0] + 1) ) {
+    legalMoves.push([copyBall(ball), 'r']);
   }
-
-
-
 
   return legalMoves;
 }
@@ -451,8 +339,7 @@ function findLegalMoves(ball, field) {
 function resp(req) {
   solve(req.query.elements);
 
-  iternum += 1;
-  return iternum.toString();
+  return JSON.stringify(solutions);
 }
 
 app.get('/', function (req, res) {
