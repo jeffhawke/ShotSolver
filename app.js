@@ -4,6 +4,8 @@ var app = express();
 
 const FIELD_SIZE = 7;
 
+var MYPORT = (typeof process.env.JSPORT === "undefined") ? 3000 : process.env.JSPORT;
+
 
 // array of triples : [ ball positions, legal moves, moves executed ]
 var solveQueue = [];
@@ -346,6 +348,8 @@ app.get('/', function (req, res) {
   res.send(resp(req))
 })
 
+//console.log(process.env);
 
+//app.listen(3000, () => console.log('Solver app listening on port 3000!'))
+app.listen(JSPORT, () => console.log('Solver app listening on port ' + JSPORT))
 
-app.listen(3000, () => console.log('Solver app listening on port 3000!'))
